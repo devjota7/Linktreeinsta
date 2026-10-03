@@ -1,0 +1,26 @@
+<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="robots" content="noindex,nofollow"><title>Painel do cliente</title>
+<link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="style.css"></head><body>
+<div class="wrap" style="padding:16px 14px 90px">
+<section id="lg"><h1 style="font-size:36px;margin:20px 0">Painel do cliente</h1><input id="us" placeholder="Seu usuário" autocomplete="username" autocapitalize="none"><input id="cd" type="password" placeholder="Seu código" autocomplete="current-password"><button class="go" id="go" style="width:100%;margin-top:8px">Entrar</button><p class="note">O aparelho fica conectado. Você só entra de novo se sair.</p><p class="note"><a href="./" style="color:var(--cyan)">Voltar ao site</a></p></section>
+<section id="ed" hidden><h2>Seu card</h2><p class="note" id="info"></p><div class="fm"><input id="nome" maxlength="40" placeholder="Nome da divulgação"><textarea id="txt" maxlength="140" placeholder="Texto (até 140 caracteres)"></textarea><input id="link" placeholder="Link (https://...)"><select id="cor"><option value="c">Rosa</option><option value="b">Ciano</option><option value="l">Laranja</option><option value="k">Roxo</option></select><label class="note">Foto (opcional)<input type="file" id="img" accept="image/*"></label></div><p class="note">Prévia:</p><div id="pv"></div>
+<div class="ar" style="margin-top:10px"><button class="go" data-a="send" style="width:100%">Enviar para aprovação</button><button class="mini" data-a="draft">Salvar rascunho</button><button class="mini x" data-a="out">Sair</button></div></section></div><div id="tt" role="status"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="common.js"></script>
+<script>
+let me,cd,ad={cor:'c',nome:'',txt:'',link:'',img:''};
+const ST={rascunho:'Rascunho: só você vê.',pendente:'Aguardando aprovação.',recusado:'Recusado: ajuste e envie de novo.'};
+const pv=()=>$('#pv').innerHTML=cardH({nome:ad.nome||'Seu nome',txt:ad.txt||'Seu texto aparece aqui.',img:ad.img},ad.cor,'<span class="bd">Anúncio</span><a class="go" href="#">Abrir</a>');
+function fill(){['nome','txt','link','cor'].forEach(f=>$('#'+f).value=ad[f]||'');const n=ad.ate?Math.ceil((new Date(ad.ate)-new Date(today))/864e5):0;
+$('#info').textContent=(ad.status==='aprovado'?(n>=0?`No ar até ${ad.ate} (${n} dias restantes).`:'Seu período terminou.'):ST[ad.status||'rascunho'])+` Período contratado: ${cd.dias} dias, contados a partir da aprovação.`;pv()}
+async function enter(){const {data:{session}}=await SB.auth.getSession();if(!session)return;me=session.user;const [c,a]=await Promise.all([SB.from('codes').select('*').eq('user_id',me.id).maybeSingle(),SB.from('ads').select('*').eq('owner',me.id).maybeSingle()]);if(!c.data)return T('Esta conta não é de cliente');cd=c.data;if(a.data)ad=a.data;$('#lg').hidden=true;$('#ed').hidden=false;fill()}
+$('#go').onclick=async()=>{const u=$('#us').value.trim().toLowerCase().replace(/[^a-z0-9_.-]/g,'');const {error}=await SB.auth.signInWithPassword({email:MAIL(u),password:$('#cd').value.trim()});error?T('Usuário ou código inválido'):enter()};
+document.addEventListener('input',e=>{const t=e.target;if(['nome','txt','link','cor'].includes(t.id)){ad[t.id]=t.value;pv()}});
+$('#img').onchange=e=>e.target.files[0]&&shrink(e.target.files[0],u=>{ad.img=u;pv()});
+document.addEventListener('click',async e=>{const a=(e.target.closest('button')||{dataset:{}}).dataset.a;if(!a)return;
+if(a==='out'){await SB.auth.signOut();location.reload()}
+if(a==='draft'||a==='send'){if(a==='send'&&(!ad.nome||!ad.txt||!/^https?:\/\//i.test(ad.link||'')))return T('Preencha nome, texto e um link com https://');
+if(ad.status==='aprovado'&&!confirm('Ao editar, seu card sai do ar até ser aprovado de novo. Continuar?'))return;
+const p={owner:me.id,nome:ad.nome,txt:ad.txt,link:ad.link,cor:ad.cor,img:ad.img||null,status:a==='send'?'pendente':'rascunho'};
+const r=ad.id?await SB.from('ads').update(p).eq('id',ad.id).select().single():await SB.from('ads').insert(p).select().single();
+if(r.error)return T('Erro: '+r.error.message);ad=r.data;fill();T(a==='send'?'Enviado! Você será avisado quando for aprovado.':'Rascunho salvo')}});
+enter();
+</script></body></html>

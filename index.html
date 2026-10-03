@@ -1,31 +1,28 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-  <head>
-    <meta charset="utf-8" />
-    <meta http-equiv="refresh" content="0; url=./index-melhorado.html" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Jota — links</title>
-    <meta name="robots" content="noindex" />
-    <style>
-      html, body {
-        margin: 0;
-        min-height: 100vh;
-        background: #07040f;
-        color: #efe9ff;
-        font-family: Arial, sans-serif;
-      }
-      body {
-        display: grid;
-        place-items: center;
-        text-align: center;
-        padding: 24px;
-      }
-      a {
-        color: #b56bff;
-      }
-    </style>
-  </head>
-  <body>
-    <p>Redirecionando para a nova versão do site...<br><a href="./index-melhorado.html">Clique aqui se não for redirecionado.</a></p>
-  </body>
-</html>
+<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>Jota — links</title>
+<meta name="description" content="Bots, comunidade e contato do Jota."><meta property="og:title" content="Jota — links"><meta property="og:image" content="https://devjota7.github.io/Linktreeinsta/img-og.jpg"><meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="https://devjota7.github.io/Linktreeinsta/"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="preload" as="image" href="img-hero.webp" fetchpriority="high">
+<link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="style.css"></head><body>
+<div class="wrap"><div class="hero"><h1>Jota</h1></div><p class="sub">Seus bots, sua comunidade, meu contato.</p><div class="av" id="av" hidden></div>
+<nav class="tabs" id="tabs" aria-label="Seções"></nav><main id="p-bots"></main><main id="p-nov"></main><main id="p-com"></main><main id="p-div"></main><main id="p-pl"></main><main id="p-aj"></main></div>
+<a id="fab" href="admin.html" aria-label="Painel do administrador">⚙</a><div id="tt" role="status"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="common.js"></script>
+<script>
+let cfg={dono:[],precos:[],planos:{}},cards=[],ads=[],tab='bots',pk='';
+const TB=[['bots','Bots'],['nov','Novidades'],['com','Comunidade'],['div','Divulgação'],['pl','Planos'],['aj','Ajuda']],CL=['','b','k'],LC=['c','l'];
+const by=t=>cards.filter(c=>c.tipo===t).map(c=>c.data),D=id=>cfg.dono.find(d=>d.id===id)||{};
+const btnH=b=>b.t==='wa'?`<a class="go" href="${W(D(b.a).num,b.m)}" target="_blank" rel="noopener">${E(b.l)}</a>`:b.t==='pl'?`<a class="go" href="#" data-go="pl" data-pk="${E(b.a)}">${E(b.l)}</a>`:`<a class="go ${b.t==='ig'?'igf':''}" href="${U(b.a)}" target="_blank" rel="noopener">${E(b.l)}</a>`;
+async function load(){const [c,k,a]=await Promise.all([SB.from('site_config').select('*').eq('id',1).maybeSingle(),SB.from('cards').select('*').order('pos').order('id'),SB.from('ads').select('*').order('id')]);
+if(k.error)T('Não consegui carregar os dados agora.');if(c.data)cfg=c.data;cards=k.data||[];ads=a.data||[];if(!pk)pk=Object.keys(cfg.planos||{})[0]||'';render()}
+function render(){
+$('#av').hidden=!(cfg.aviso_on&&cfg.aviso_txt);$('#av').textContent=cfg.aviso_txt||'';
+$('#tabs').innerHTML=TB.map(([k,l])=>`<button class="${k===tab?'on':''}" aria-selected="${k===tab}" data-t="${k}">${l}</button>`).join('');
+TB.forEach(([k])=>$('#p-'+k).classList.toggle('on',k===tab));
+$('#p-bots').innerHTML='<h3 class="sec">Bots</h3>'+by('bot').map((b,i)=>cardH(b,CL[i%3],(b.btn||[]).map(btnH).join(''))).join('');
+const nv=by('nov');$('#p-nov').innerHTML='<h3 class="sec">Novidades dos bots</h3>'+(nv.map((n,i)=>`<section class="card nb"><h2>${E(n.tit)}</h2><p>${i?'':'<span class="new">Novo</span> '}${E(n.bot)} · ${E(n.data)}</p><p>${E(n.txt)}</p></section>`).join('')||'<p class="note">Nenhuma novidade por enquanto.</p>');
+$('#p-com').innerHTML='<h3 class="sec">Grupos em destaque</h3>'+by('gr').map((g,i)=>cardH(g,LC[i%2],`<div class="acts"><a class="go" href="${U(g.link)}" target="_blank" rel="noopener">Entrar no grupo</a>${g.insta?`<a class="go igf" href="${U(g.insta)}" target="_blank" rel="noopener">Instagram</a>`:''}</div>`)).join('')+'<h3 class="sec">Contato</h3><section class="card nb"><h2>Fale com a equipe</h2><div class="acts" style="margin-top:8px">'+cfg.dono.map(d=>`<a class="go" href="${W(d.num,'Oi '+d.nome+'!')}" target="_blank" rel="noopener">${E(d.nome)}</a>`).join('')+'</div></section>';
+$('#p-div').innerHTML='<h3 class="sec">Divulgação</h3>'+(ads.map(a=>cardH(a,a.cor,`<span class="bd">Anúncio</span><a class="go" href="${U(a.link)}" target="_blank" rel="noopener">Abrir</a>`)).join('')||'<p class="note">Nenhum anúncio ativo. O seu pode ser o primeiro.</p>')+`<section class="card nb"><h2>Anuncie aqui</h2><p>${(cfg.precos||[]).map(p=>E(p.d)+' dias · '+E(p.v)).join(' | ')}</p><p>Você recebe um usuário e um código para montar seu card. Ele entra no ar depois da aprovação.</p><div class="acts" style="margin-top:8px"><a class="go" href="${W((cfg.dono[0]||{}).num,'Oi! Quero anunciar na aba Divulgação.')}" target="_blank" rel="noopener">Quero anunciar</a><a class="go igf" href="cliente.html">Painel do cliente</a></div></section>`;
+const p=cfg.planos[pk]||{g:[]};$('#p-pl').innerHTML='<h3 class="sec">Planos</h3><div class="seg">'+Object.keys(cfg.planos||{}).map(k=>`<button class="${k===pk?'on':''}" data-pk="${E(k)}">${E(k)}</button>`).join('')+`</div><p class="note">${E(p.n)}</p>`+p.g.map((g,i)=>`<details ${i?'':'open'}><summary>${E(g[0])}</summary>${g[1].map(r=>`<div class="row"><span>${E(r[0])}</span><b>${E(r[1])}</b></div>`).join('')}</details>`).join('')+(p.b||[]).map(b=>`<a class="go" href="${U(b[1])}" target="_blank" rel="noopener">${E(b[0])}</a>`).join('');
+$('#p-aj').innerHTML='<h3 class="sec">Ajuda</h3><details><summary>Como funciona a triagem?</summary><p class="note">Entre pelo link do grupo. A equipe te atende e libera a entrada.</p></details><details><summary>Como anuncio?</summary><p class="note">Aba Divulgação: fale com a equipe, receba seu usuário e código e monte seu card.</p></details>'+cfg.dono.map(d=>`<a class="go" href="${W(d.num,'Oi '+d.nome+'! Preciso de ajuda.')}" target="_blank" rel="noopener">Falar com ${E(d.nome)}</a>`).join('')}
+document.addEventListener('click',e=>{const t=e.target.closest('[data-t],[data-go],[data-pk]');if(!t)return;const d=t.dataset;if(d.go){e.preventDefault();tab=d.go}if(d.t)tab=d.t;if(d.pk)pk=d.pk;render();if(d.t||d.go)scrollTo(0,0)});
+load();SB.channel('site').on('postgres_changes',{event:'*',schema:'public'},load).subscribe();
+</script></body></html>

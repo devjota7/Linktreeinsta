@@ -1,0 +1,54 @@
+<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="robots" content="noindex,nofollow"><title>Painel</title>
+<link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="style.css"></head><body>
+<div class="wrap" style="padding:16px 14px 90px">
+<section id="lg"><h1 style="font-size:40px;margin:20px 0">Painel</h1><input id="em" type="email" placeholder="E-mail" autocomplete="username"><input id="pw" type="password" placeholder="Senha" autocomplete="current-password"><button class="go" id="go" style="width:100%;margin-top:8px">Entrar</button><p class="note"><a href="./" style="color:var(--cyan)">Voltar ao site</a></p></section>
+<section id="ed" hidden><div class="ar" style="justify-content:space-between;align-items:center"><h2>Painel</h2><a href="./" class="mini" style="display:flex;align-items:center;text-decoration:none">Ver site</a></div><div class="at" id="at"></div><div id="bd"></div><div class="bar" id="sv"><button class="go" data-a="save" style="width:100%">Salvar alterações</button></div></section></div><div id="tt" role="status"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="common.js"></script>
+<script>
+let R={bot:[],nov:[],gr:[]},cfg={dono:[],precos:[],planos:{}},ads=[],cods=[],gone=[],at='bot',novo=null;
+const o=x=>x.data||x,AT=[['bot','Cards'],['nov','Novidades'],['gr','Grupos'],['ads','Anúncios'],['cli','Clientes'],['ger','Geral']];
+const F={bot:[['nome','Nome'],['desc','Descrição',1],['tags','Tags (separe por vírgula)'],['img','',2]],nov:[['bot','Bot'],['tit','Título'],['data','Data (AAAA-MM-DD)'],['txt','Texto',1]],gr:[['nome','Nome'],['desc','Descrição',1],['link','Link do grupo (https)'],['insta','Instagram (opcional)'],['img','',2]],dono:[['id','ID curto (sem espaço)'],['nome','Nome'],['num','Número com DDI (5521...)']],precos:[['d','Dias'],['v','Preço']]};
+const NEW={bot:()=>({tipo:'bot',show:true,data:{nome:'',desc:'',tags:'',img:'',btn:[]}}),nov:()=>({tipo:'nov',show:true,data:{bot:'',tit:'',data:today,txt:''}}),gr:()=>({tipo:'gr',show:true,data:{nome:'',desc:'',link:'',insta:'',img:''}}),dono:()=>({id:'d'+Date.now()%1e5,nome:'',num:''}),precos:()=>({d:7,v:'R$ '})};
+const LS=k=>k==='dono'?cfg.dono:k==='precos'?cfg.precos:R[k];
+const inp=(k,i,f,v,ph,ta,b)=>`<${ta?'textarea':'input'} data-k="${k}" data-i="${i}" data-f="${f}" ${b!=null?`data-b="${b}"`:''} placeholder="${ph}" ${ta?'>'+E(v)+'</textarea>':`value="${E(v)}">`}`;
+const btnEd=(x,i)=>(x.data.btn||[]).map((b,j)=>`<div class="it">${inp('bot',i,'l',b.l,'Texto do botão',0,j)}<select data-k="bot" data-i="${i}" data-f="t" data-b="${j}">${[['wa','WhatsApp'],['ig','Instagram'],['link','Link'],['pl','Ver planos']].map(([v,l])=>`<option value="${v}" ${b.t===v?'selected':''}>${l}</option>`).join('')}</select>${b.t==='wa'?`<select data-k="bot" data-i="${i}" data-f="a" data-b="${j}">${cfg.dono.map(d=>`<option value="${E(d.id)}" ${b.a===d.id?'selected':''}>${E(d.nome)}</option>`).join('')}</select>${inp('bot',i,'m',b.m||'','Mensagem pronta',0,j)}`:inp('bot',i,'a',b.a||'',b.t==='pl'?'Plano (chave em Geral → Planos)':'https://...',0,j)}<button class="mini x" data-a="bd" data-k="bot" data-i="${i}" data-b="${j}">Remover botão</button></div>`).join('')+`<button class="mini" data-a="ba" data-i="${i}">+ Botão</button>`;
+const ed=k=>LS(k).map((x,i)=>{const d=o(x);return `<div class="it"><b>${E(d.nome||d.tit||d.id||'Novo')}</b>${x.show===false?' <span class="new">Oculto</span>':''}${F[k].map(([f,l,t])=>t===2?`<div class="ph"><img src="${E(AV(d.nome,d.img))}" alt=""><label class="mini" style="display:flex;align-items:center">Trocar foto<input type="file" accept="image/*" hidden data-k="${k}" data-i="${i}"></label></div>`:inp(k,i,f,d[f]??'',l,t)).join('')}${k==='bot'?btnEd(x,i):''}<div class="ar">${'show' in x?`<button class="mini" data-a="tg" data-k="${k}" data-i="${i}">${x.show===false?'Mostrar':'Ocultar'}</button>`:''}<button class="mini" data-a="up" data-k="${k}" data-i="${i}">↑</button><button class="mini" data-a="dn" data-k="${k}" data-i="${i}">↓</button><button class="mini x" data-a="del" data-k="${k}" data-i="${i}">Remover</button></div></div>`}).join('')+`<button class="mini" data-a="add" data-k="${k}">+ Adicionar</button>`;
+const who=a=>(cods.find(c=>c.user_id===a.owner)||{}).username||'—';
+function draw(){const pend=ads.filter(a=>a.status==='pendente').length;
+$('#at').innerHTML=AT.map(([k,l])=>`<button class="${k===at?'on':''}" data-at="${k}">${l}${k==='ads'&&pend?' ('+pend+')':''}</button>`).join('');
+$('#sv').hidden=['ads','cli'].includes(at);
+$('#bd').innerHTML=at==='ads'?(ads.map(a=>`<div class="it"><b>${E(a.nome)}</b> <span class="${a.status==='aprovado'?'bd':'new'}">${E(a.status)}</span><p class="note">Cliente: ${E(who(a))} · ${a.dias} dias${a.ate?' · até '+E(a.ate):''}</p><p>${E(a.txt)}</p><p class="note">${E(a.link)}</p><div class="ar">${a.status!=='aprovado'?`<button class="mini ok" data-a="ok" data-id="${a.id}">Aprovar e publicar</button>`:''}<button class="mini" data-a="no" data-id="${a.id}">Recusar</button><button class="mini x" data-a="dad" data-id="${a.id}">Remover</button></div></div>`).join('')||'<p class="note">Nenhum anúncio ainda.</p>'):
+at==='cli'?`<h2>Novo cliente</h2><input id="cu" placeholder="Usuário (letras e números)"><input id="cdias" type="number" min="1" max="365" value="7" placeholder="Dias de divulgação"><button class="go" data-a="mk" style="width:100%">Gerar código</button>${novo?`<div class="it"><p class="note">Copie agora. O código não aparece de novo.</p><p>Usuário: <b>${E(novo.username)}</b></p><p class="code">${E(novo.codigo)}</p><p class="note">${novo.dias} dias · painel: cliente.html</p></div>`:''}<h2>Clientes</h2>`+cods.map(c=>`<div class="it"><b>${E(c.username)}</b> · ${c.dias} dias<div class="ar"><button class="mini x" data-a="dc" data-id="${c.user_id}">Remover acesso</button></div></div>`).join(''):
+at==='ger'?`<label class="note"><input type="checkbox" id="ao" ${cfg.aviso_on?'checked':''} style="width:auto"> Mostrar aviso no topo</label><input id="atx" value="${E(cfg.aviso_txt)}" placeholder="Texto do aviso"><h2>Contatos (donos)</h2>${ed('dono')}<h2>Preços da divulgação</h2>${ed('precos')}<h2>Planos (JSON)</h2><textarea id="pj" spellcheck="false" style="min-height:240px;font:13px monospace">${E(JSON.stringify(cfg.planos,null,1))}</textarea><h2>Trocar minha senha</h2><input id="np" type="password" placeholder="Nova senha (mín. 8)" autocomplete="new-password"><button class="mini" data-a="pw">Trocar senha</button> <button class="mini x" data-a="out">Sair</button>`:ed(at)}
+async function load(){const [c,k,a,d]=await Promise.all([SB.from('site_config').select('*').eq('id',1).single(),SB.from('cards').select('*').order('pos').order('id'),SB.from('ads').select('*').order('id',{ascending:false}),SB.from('codes').select('*').order('created',{ascending:false})]);
+if(c.data){cfg=c.data;cfg.dono=cfg.dono||[];cfg.precos=cfg.precos||[]}R={bot:[],nov:[],gr:[]};(k.data||[]).forEach(x=>R[x.tipo].push(x));ads=a.data||[];cods=d.data||[];gone=[];draw()}
+async function enter(){const {data:{session}}=await SB.auth.getSession();if(!session)return;const {data}=await SB.from('admins').select('user_id').maybeSingle();if(!data)return T('Esta conta não é de administrador');$('#lg').hidden=true;$('#ed').hidden=false;load()}
+$('#go').onclick=async()=>{const {error}=await SB.auth.signInWithPassword({email:$('#em').value.trim(),password:$('#pw').value});error?T('E-mail ou senha inválidos'):enter()};
+async function save(){const rows=[];['bot','nov','gr'].forEach(t=>R[t].forEach((x,i)=>{const r={tipo:t,pos:i,show:x.show!==false,data:x.data};if(x.id)r.id=x.id;rows.push(r)}));
+const up=rows.filter(r=>r.id),ins=rows.filter(r=>!r.id),q=[SB.from('site_config').upsert({id:1,aviso_on:!!cfg.aviso_on,aviso_txt:cfg.aviso_txt||'',dono:cfg.dono,precos:cfg.precos,planos:cfg.planos})];
+if(up.length)q.push(SB.from('cards').upsert(up));if(ins.length)q.push(SB.from('cards').insert(ins));if(gone.length)q.push(SB.from('cards').delete().in('id',gone));
+T('Salvando...');const rs=await Promise.all(q),er=rs.find(r=>r.error);if(er)return T('Erro: '+er.error.message);T('Publicado! O site já atualizou.');load()}
+async function fn(b){const {data,error}=await SB.functions.invoke('admin-codes',{body:b});if(error||(data&&data.erro)){T('Erro: '+((data&&data.erro)||error.message));return null}return data}
+document.addEventListener('input',e=>{const t=e.target,d=t.dataset;
+if(t.id==='ao'||t.id==='atx'){cfg.aviso_on=$('#ao').checked;cfg.aviso_txt=$('#atx').value}
+else if(t.id==='pj'){try{cfg.planos=JSON.parse(t.value);t.style.borderColor=''}catch{t.style.borderColor='#ff4f6d'}}
+else if(d.k&&t.type!=='file'){const x=o(LS(d.k)[d.i]);(d.b!=null?x.btn[d.b]:x)[d.f]=t.value}});
+document.addEventListener('change',e=>{const t=e.target,d=t.dataset;if(t.tagName==='SELECT'&&d.b!=null){const x=o(LS(d.k)[d.i]).btn[d.b];x[d.f]=t.value;draw()}
+if(t.type==='file'&&t.files[0])shrink(t.files[0],u=>{o(LS(d.k)[d.i]).img=u;draw()})});
+document.addEventListener('click',async e=>{const t=e.target.closest('button');if(!t)return;const d=t.dataset,k=d.k,i=+d.i;if(d.at){at=d.at;novo=null;draw()}
+const a=d.a;if(!a)return;const L=k&&LS(k);
+if(a==='add'){L.push(NEW[k]());draw()}
+if(a==='del'){if(L[i].id)gone.push(L[i].id);L.splice(i,1);draw()}
+if(a==='tg'){L[i].show=L[i].show===false;draw()}
+if(a==='up'&&i>0){[L[i-1],L[i]]=[L[i],L[i-1]];draw()}
+if(a==='dn'&&i<L.length-1){[L[i+1],L[i]]=[L[i],L[i+1]];draw()}
+if(a==='ba'){R.bot[i].data.btn.push({l:'Novo botão',t:'link',a:''});draw()}
+if(a==='bd'){R.bot[i].data.btn.splice(+d.b,1);draw()}
+if(a==='save')save();
+if(['ok','no','dad'].includes(a)){const x=ads.find(z=>z.id==d.id);const r=a==='ok'?await SB.from('ads').update({status:'aprovado',ate:x.ate||add(x.dias||7)}).eq('id',x.id):a==='no'?await SB.from('ads').update({status:'recusado'}).eq('id',x.id):await SB.from('ads').delete().eq('id',x.id);r.error?T('Erro: '+r.error.message):(T('Feito'),load())}
+if(a==='mk'){const r=await fn({acao:'criar',username:$('#cu').value,dias:+$('#cdias').value});if(r){novo=r;await load()}}
+if(a==='dc'&&confirm('Remover o acesso deste cliente?')){if(await fn({acao:'apagar',user_id:d.id})){T('Acesso removido');load()}}
+if(a==='pw'){const p=$('#np').value;if(p.length<8)return T('Use pelo menos 8 caracteres');const {error}=await SB.auth.updateUser({password:p});T(error?'Erro: '+error.message:'Senha trocada')}
+if(a==='out'){await SB.auth.signOut();location.reload()}});
+enter();
+</script></body></html>
